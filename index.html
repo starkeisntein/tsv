@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>动态桌面</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="background-layer"></div>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="clock-widget" class="widget glass-effect">
+    <div id="clock-time">
+      <span id="clock-hours">00</span>
+      <span class="clock-separator">:</span>
+      <span id="clock-minutes">00</span>
+      <span class="clock-separator">:</span>
+      <span id="clock-seconds">00</span>
+    </div>
+    <div id="clock-date">
+      <span id="clock-year">2026</span>
+      <span>年</span>
+      <span id="clock-month">05</span>
+      <span>月</span>
+      <span id="clock-day">17</span>
+      <span>日</span>
+      <span id="clock-weekday">星期一</span>
+    </div>
+  </div>
+
+  <div id="weather-widget" class="widget glass-effect">
+    <div id="weather-header">
+      <span id="weather-city">正在定位...</span>
+      <span id="weather-refresh" title="刷新天气">🔄</span>
+    </div>
+    <div id="weather-main">
+      <span id="weather-icon">☀️</span>
+      <span id="weather-temp">--°C</span>
+    </div>
+    <div id="weather-desc">加载中...</div>
+    <div id="weather-details">
+      <span id="weather-humidity">湿度: --%</span>
+      <span id="weather-wind">风速: --</span>
+    </div>
+  </div>
+
+  <div id="system-widget" class="widget glass-effect">
+    <div id="system-title">系统信息</div>
+    <div id="system-info">
+      <div class="sys-item">
+        <span class="sys-label">CPU</span>
+        <span id="sys-cpu" class="sys-value">--</span>
+      </div>
+      <div class="sys-item">
+        <span class="sys-label">内存</span>
+        <span id="sys-mem" class="sys-value">--</span>
+      </div>
+      <div class="sys-item">
+        <span class="sys-label">系统</span>
+        <span id="sys-os" class="sys-value">--</span>
+      </div>
+      <div class="sys-item">
+        <span class="sys-label">运行</span>
+        <span id="sys-uptime" class="sys-value">--</span>
+      </div>
+    </div>
+    <div id="sys-mem-bar-container">
+      <div id="sys-mem-bar"></div>
+    </div>
+  </div>
+
+  <div id="settings-btn" title="设置" class="glass-effect">⚙️</div>
+  <div id="settings-panel" class="glass-effect hidden">
+    <div id="settings-header">
+      <span>设置</span>
+      <span id="settings-close">✕</span>
+    </div>
+    <div class="setting-item">
+      <label>背景图片</label>
+      <button id="btn-select-bg">选择图片</button>
+    </div>
+    <div class="setting-item">
+      <label>粒子数量</label>
+      <input type="range" id="particle-count" min="20" max="200" value="80">
+      <span id="particle-count-value">80</span>
+    </div>
+    <div class="setting-item">
+      <label>粒子颜色</label>
+      <input type="color" id="particle-color" value="#ffffff">
+    </div>
+    <div class="setting-item">
+      <label>粒子速度</label>
+      <input type="range" id="particle-speed" min="0.2" max="3" step="0.1" value="1">
+      <span id="particle-speed-value">1.0</span>
+    </div>
+  </div>
+
+  <script src="clock.js"></script>
+  <script src="particles.js"></script>
+  <script src="weather.js"></script>
+  <script src="system-info.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
