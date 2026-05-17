@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onSettingsLoaded: (callback) => {
     ipcRenderer.on('settings-loaded', (event, settings) => callback(settings));
   },
+  onSettingsUpdated: (callback) => {
+    ipcRenderer.on('settings-updated', (event, settings) => callback(settings));
+  },
 });

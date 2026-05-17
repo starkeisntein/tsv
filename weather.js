@@ -87,7 +87,5 @@ async function refreshWeather() {
   return parsed;
 }
 
-document.getElementById('weather-refresh').addEventListener('click', refreshWeather);
-
 refreshWeather();
 setInterval(refreshWeather, 600000);

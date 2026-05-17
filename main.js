@@ -4,6 +4,7 @@ const os = require('os');
 const fs = require('fs');
 
 let mainWindow;
+let settingsWindow;
 let tray;
 
 function createWindow() {
@@ -12,6 +13,8 @@ function createWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
 
   mainWindow = new BrowserWindow({
+    x: 0,
+    y: 0,
     width: width,
     height: height,
     transparent: true,
@@ -27,7 +30,7 @@ function createWindow() {
     },
   });
 
-  mainWindow.setIgnoreMouseEvents(false);
+  mainWindow.setIgnoreMouseEvents(true, { forward: true });
   mainWindow.loadFile('index.html');
 
   mainWindow.on('closed', () => {
@@ -37,6 +40,33 @@ function createWindow() {
   if (process.argv.includes('--dev')) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
+}
+
+function createSettingsWindow() {
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.focus();
+    return;
+  }
+
+  settingsWindow = new BrowserWindow({
+    width: 340,
+    height: 420,
+    resizable: false,
+    frame: true,
+    alwaysOnTop: true,
+    title: '动态桌面 - 设置',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  settingsWindow.loadFile('settings.html');
+
+  settingsWindow.on('closed', () => {
+    settingsWindow = null;
+  });
 }
 
 function createTray() {
@@ -51,12 +81,8 @@ function createTray() {
   tray = new Tray(trayIcon);
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '显示/隐藏',
-      click: () => {
-        if (mainWindow) {
-          mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show();
-        }
-      },
+      label: '设置',
+      click: () => createSettingsWindow(),
     },
     { type: 'separator' },
     {
@@ -74,10 +100,13 @@ function createTray() {
   ]);
   tray.setToolTip('动态桌面');
   tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => createSettingsWindow());
 }
 
 async function selectBackgroundImage() {
-  const result = await dialog.showOpenDialog(mainWindow, {
+  const targetWindow = settingsWindow || mainWindow;
+  const result = await dialog.showOpenDialog(targetWindow, {
     properties: ['openFile'],
     filters: [
       { name: '图片文件', extensions: ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp'] },
@@ -89,8 +118,11 @@ async function selectBackgroundImage() {
     const settings = loadSettings();
     settings.backgroundImage = filePath;
     saveSettings(settings);
-    if (mainWindow) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('background-changed', filePath);
+    }
+    if (settingsWindow && !settingsWindow.isDestroyed()) {
+      settingsWindow.webContents.send('background-changed', filePath);
     }
   }
 }
@@ -104,7 +136,7 @@ function loadSettings() {
   } catch (e) {
     console.error('加载设置失败:', e);
   }
-  return { backgroundImage: '', particleCount: 80, particleColor: '#ffffff' };
+  return { backgroundImage: '', particleCount: 80, particleColor: '#ffffff', particleSpeed: 1.0 };
 }
 
 function saveSettings(settings) {
@@ -155,7 +187,6 @@ ipcMain.handle('get-system-info', async () => {
     hostname: os.hostname(),
     cpuModel: cpus.length > 0 ? cpus[0].model : 'N/A',
     cpuCores: cpus.length,
-    cpuUsage: 0,
     totalMem: totalMem,
     usedMem: usedMem,
     freeMem: freeMem,
@@ -167,6 +198,9 @@ ipcMain.handle('get-system-info', async () => {
 
 ipcMain.handle('save-settings', async (event, settings) => {
   saveSettings(settings);
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('settings-updated', settings);
+  }
 });
 
 ipcMain.handle('get-settings', async () => {

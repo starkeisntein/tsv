@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>动态桌面 - 设置</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      padding: 20px;
+      user-select: none;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+    }
+    .setting-group {
+      margin-bottom: 18px;
+    }
+    .setting-group label {
+      display: block;
+      font-size: 13px;
+      opacity: 0.7;
+      margin-bottom: 6px;
+    }
+    .setting-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .setting-row button {
+      flex: 1;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #e0e0e0;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .setting-row button:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    .setting-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      outline: none;
+    }
+    .setting-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #4ade80;
+      cursor: pointer;
+    }
+    .setting-row input[type="color"] {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .setting-row input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .setting-row input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 6px;
+    }
+    .setting-value {
+      min-width: 30px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
+    }
+    .current-bg {
+      font-size: 12px;
+      opacity: 0.5;
+      margin-top: 4px;
+      word-break: break-all;
+    }
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px 20px;
+      background: rgba(0,0,0,0.3);
+      font-size: 11px;
+      opacity: 0.5;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>⚙️ 动态桌面设置</h2>
+
+  <div class="setting-group">
+    <label>背景图片</label>
+    <div class="setting-row">
+      <button id="btn-select-bg">选择图片</button>
+    </div>
+    <div id="current-bg-path" class="current-bg">未设置</div>
+  </div>
+
+  <div class="setting-group">
+    <label>粒子数量</label>
+    <div class="setting-row">
+      <input type="range" id="particle-count" min="20" max="200" value="80">
+      <span id="particle-count-value" class="setting-value">80</span>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <label>粒子颜色</label>
+    <div class="setting-row">
+      <input type="color" id="particle-color" value="#ffffff">
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <label>粒子速度</label>
+    <div class="setting-row">
+      <input type="range" id="particle-speed" min="0.2" max="3" step="0.1" value="1">
+      <span id="particle-speed-value" class="setting-value">1.0</span>
+    </div>
+  </div>
+
+  <div class="status-bar">设置自动保存 · 右键托盘图标快速操作</div>
+
+  <script>
+    function getEl(id) { return document.getElementById(id); }
+
+    const countSlider = getEl('particle-count');
+    const countValue = getEl('particle-count-value');
+    const colorPicker = getEl('particle-color');
+    const speedSlider = getEl('particle-speed');
+    const speedValue = getEl('particle-speed-value');
+
+    function saveSettings() {
+      const settings = {
+        particleCount: parseInt(countSlider.value),
+        particleColor: colorPicker.value,
+        particleSpeed: parseFloat(speedSlider.value),
+      };
+      if (window.electronAPI) {
+        window.electronAPI.saveSettings(settings);
+      }
+    }
+
+    countSlider.addEventListener('input', () => {
+      countValue.textContent = countSlider.value;
+      saveSettings();
+    });
+
+    colorPicker.addEventListener('input', saveSettings);
+
+    speedSlider.addEventListener('input', () => {
+      speedValue.textContent = parseFloat(speedSlider.value).toFixed(1);
+      saveSettings();
+    });
+
+    getEl('btn-select-bg').addEventListener('click', async () => {
+      if (window.electronAPI) {
+        await window.electronAPI.selectBackground();
+      }
+    });
+
+    if (window.electronAPI) {
+      window.electronAPI.onBackgroundChanged((filePath) => {
+        const parts = filePath.split(/[/\\]/);
+        getEl('current-bg-path').textContent = parts[parts.length - 1];
+      });
+
+      window.electronAPI.getSettings().then((settings) => {
+        if (settings) {
+          if (settings.particleCount) {
+            countSlider.value = settings.particleCount;
+            countValue.textContent = settings.particleCount;
+          }
+          if (settings.particleColor) {
+            colorPicker.value = settings.particleColor;
+          }
+          if (settings.particleSpeed) {
+            speedSlider.value = settings.particleSpeed;
+            speedValue.textContent = settings.particleSpeed.toFixed(1);
+          }
+          if (settings.backgroundImage) {
+            const parts = settings.backgroundImage.split(/[/\\]/);
+            getEl('current-bg-path').textContent = parts[parts.length - 1];
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
